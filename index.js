@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 const qrcode = require('qrcode');
+const puppeteer = require('puppeteer');
 
 // Caminho para os arquivos de autenticação
 const authPath = path.join(__dirname, '.wwebjs_auth');
@@ -17,10 +18,24 @@ let qrGenerated = false; // Flag para verificar se o QR foi gerado
 let qrCode = null; // Variável para armazenar o QR Code em base64
 
 // Função para inicializar o cliente WhatsApp
-function initWhatsAppClient() {
+async function initWhatsAppClient() {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process', // Evita problemas de multiplos processos
+            '--disable-gpu'
+        ]
+    });
+
     client = new Client({
         authStrategy: new LocalAuth(),
-        puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }  // Adiciona opções para Puppeteer
+        puppeteer: { browser: browser }
     });
 
     client.on('qr', (qr) => {
@@ -77,7 +92,7 @@ function initWhatsAppClient() {
     });
 
     // Inicializa o cliente do WhatsApp
-    client.initialize();
+    await client.initialize();
 }
 
 // Função para limpar os arquivos de autenticação e resetar o WhatsApp
@@ -94,35 +109,30 @@ function limparAutenticacao() {
 }
 
 // Função para destruir o cliente e reiniciar o processo do WhatsApp
-function resetWhatsAppClient() {
-    return new Promise((resolve, reject) => {
-        if (client) {
-            client.destroy().then(() => {
-                limparAutenticacao().then(() => {
-                    console.log('Cliente WhatsApp destruído. Reinicializando para novo QR Code...');
-                    initWhatsAppClient();  // Reinicializa o cliente do WhatsApp
-                    resolve();
-                }).catch(err => {
-                    console.error("Erro ao limpar autenticação:", err);
-                    reject(err);
-                });
-            }).catch(err => {
-                console.error("Erro ao destruir o cliente WhatsApp:", err);
-                reject(err);
-            });
-        } else {
-            reject(new Error('Cliente WhatsApp não está inicializado.'));
+async function resetWhatsAppClient() {
+    if (client) {
+        try {
+            await client.destroy();
+            await limparAutenticacao();
+            console.log('Cliente WhatsApp destruído. Reinicializando para novo QR Code...');
+            await initWhatsAppClient();  // Reinicializa o cliente do WhatsApp
+        } catch (err) {
+            console.error("Erro ao resetar o cliente WhatsApp:", err);
+            throw err;
         }
-    });
+    } else {
+        throw new Error('Cliente WhatsApp não está inicializado.');
+    }
 }
 
 // Rota para resetar o cliente WhatsApp
-app.post('/reset-whatsapp', (req, res) => {
-    resetWhatsAppClient().then(() => {
+app.post('/reset-whatsapp', async (req, res) => {
+    try {
+        await resetWhatsAppClient();
         res.json({ status: 'WhatsApp reinicializado com sucesso' });
-    }).catch(err => {
-        res.status(500).json({ status: 'Erro ao resetar o WhatsApp', error: err });
-    });
+    } catch (err) {
+        res.status(500).json({ status: 'Erro ao resetar o WhatsApp', error: err.message });
+    }
 });
 
 // Endpoint para obter o QR Code atualizado
@@ -135,22 +145,28 @@ app.get('/get-qr', (req, res) => {
 });
 
 // Rota para enviar mensagem via API POST
-app.post('/send', (req, res) => {
+app.post('/send', async (req, res) => {
     const { numero, mensagem } = req.body;
     const chatId = `${numero}@c.us`;  // Concatena o sufixo correto
 
-    client.sendMessage(chatId, mensagem).then(response => {
+    try {
+        const response = await client.sendMessage(chatId, mensagem);
         res.json({ status: 'Mensagem enviada', response });
-    }).catch(err => {
+    } catch (err) {
         console.error("Erro ao enviar mensagem:", err);
-        res.status(500).json({ status: 'Erro ao enviar mensagem', error: err });
-    });
+        res.status(500).json({ status: 'Erro ao enviar mensagem', error: err.message });
+    }
 });
 
 // Inicializa o cliente do WhatsApp na primeira execução
-initWhatsAppClient();
-
-// Inicia o servidor Express na porta 3000
-app.listen(3000, () => {
-    console.log('API rodando na porta 3000');
-});
+(async () => {
+    try {
+        await initWhatsAppClient();
+        // Inicia o servidor Express na porta 3000
+        app.listen(3000, () => {
+            console.log('API rodando na porta 3000');
+        });
+    } catch (err) {
+        console.error("Erro ao inicializar o cliente WhatsApp:", err);
+    }
+})();
