@@ -2,5 +2,4 @@ streamlit
 requests
 pandas
 pillow
-sqlite3
 flask
