@@ -1,13 +1,28 @@
 {
-  "name": "whatsapp-worker",
+  "name": "whatsapp-streamlit",
   "version": "1.0.0",
-  "description": "Worker Node.js para WhatsApp",
+  "description": "Worker para integrar o WhatsApp Web com o backend e Streamlit",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["whatsapp", "streamlit", "flask", "automation"],
+  "author": "Seu Nome",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.x"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "whatsapp-web.js": "^1.15.1"
+    "body-parser": "^1.20.3",
+    "express": "^4.21.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0",
+    "node-fetch": "^2.6.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rolfmarquardtjr/escolapresente.git"
   }
 }
