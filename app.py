@@ -362,6 +362,9 @@ def run_streamlit():
                 df.to_excel('alunos_atualizados.xlsx', index=False)
                 st.success(f"Dados de {selected_aluno} atualizados com sucesso!")
 
+# Configurar a execução do Streamlit na porta correta
 if __name__ == "__main__":
     st.write(f"Iniciando aplicação na porta {port}")
-    st.run(port=port, server_address='0.0.0.0')
+    st._is_running_with_streamlit = False  # Evita erro ao rodar programaticamente
+    from streamlit.web import cli as stcli
+    stcli.main(['streamlit', 'run', 'app.py', '--server.port', str(port), '--server.address', '0.0.0.0'])
