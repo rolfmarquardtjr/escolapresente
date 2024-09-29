@@ -1,3 +1,3 @@
 web: streamlit run app.py
-flask: python backend.py
-worker: node index.js
+worker-flask: python backend.py
+worker-node: node index.js
