@@ -10,10 +10,10 @@ import time
 from PIL import Image
 from io import BytesIO
 
-# Heroku define a variável de ambiente PORT, então precisamos usá-la
-port = int(os.getenv("PORT", 8501))
+# Definir a porta como a fornecida pela variável de ambiente PORT
+port = int(os.environ.get("PORT", 8501))
 
-# Isso força o Streamlit a rodar na porta correta
+# Configuração da página Streamlit
 st.set_page_config(page_title="Sistema de Presença")
 
 # Função para inicializar o banco de dados e criar tabelas se não existirem
@@ -362,5 +362,6 @@ def run_streamlit():
                 df.to_excel('alunos_atualizados.xlsx', index=False)
                 st.success(f"Dados de {selected_aluno} atualizados com sucesso!")
 
-if __name__ == '__main__':
-    st.run(port=port)
+if __name__ == "__main__":
+    st.write(f"Iniciando aplicação na porta {port}")
+    st.run(port=port, server_address='0.0.0.0')
