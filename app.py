@@ -10,8 +10,8 @@ import time
 from PIL import Image
 from io import BytesIO
 
-# Definir a porta como a fornecida pela variável de ambiente PORT
-port = int(os.environ.get("PORT", 8501))
+# Obter a porta fornecida pelo Heroku
+port = int(os.getenv("PORT", 8501))
 
 # Configuração da página Streamlit
 st.set_page_config(page_title="Sistema de Presença")
@@ -362,9 +362,9 @@ def run_streamlit():
                 df.to_excel('alunos_atualizados.xlsx', index=False)
                 st.success(f"Dados de {selected_aluno} atualizados com sucesso!")
 
-# Configurar a execução do Streamlit na porta correta
 if __name__ == "__main__":
     st.write(f"Iniciando aplicação na porta {port}")
-    st._is_running_with_streamlit = False  # Evita erro ao rodar programaticamente
+    
+    # Rodar o Streamlit na porta fornecida
     from streamlit.web import cli as stcli
-    stcli.main(['streamlit', 'run', 'app.py', '--server.port', str(port), '--server.address', '0.0.0.0'])
+    stcli.main(['streamlit', 'run', 'teste_online.py', '--server.port', str(port), '--server.address', '0.0.0.0'])
